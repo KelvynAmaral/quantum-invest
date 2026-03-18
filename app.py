@@ -16,6 +16,16 @@ st.markdown("""
     html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #05070a; color: #e1e1e1; }
     .main { background: #05070a; }
     
+    /* CORREÇÃO PARA O ZOOM 100% / LARGURA EXCESSIVA */
+    .block-container {
+        max-width: 1400px;
+        padding-top: 2rem;
+        padding-right: 2rem;
+        padding-left: 2rem;
+        padding-bottom: 2rem;
+        margin: auto;
+    }
+
     /* Metric Cards Glassmorphism */
     [data-testid="stMetric"] {
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
@@ -106,30 +116,25 @@ if ret is not None:
     mask = (ret['Data'].dt.date >= start_date) & (ret['Data'].dt.date <= end_date)
     df_f = ret.loc[mask].copy()
     
-    # Cálculo Seguro da Carteira
     w_series = pd.Series(pesos_user) / 100
     df_f['Portfolio'] = df_f[ativos_user].mul(w_series).sum(axis=1)
     
-    # Limpeza para evitar NaN nos cálculos estatísticos
     df_calc = df_f.dropna(subset=['Portfolio', 'BRAX11'])
     
-    if len(df_calc) > 5:  # Só calcula se tiver dados suficientes
+    if len(df_calc) > 5:
         acum_port = (1 + df_calc['Portfolio']).cumprod()
         acum_idx = (1 + df_calc['BRAX11']).cumprod()
         
         vol_anual = df_calc['Portfolio'].std() * np.sqrt(252)
         sharpe = (df_calc['Portfolio'].mean() * 252) / vol_anual if vol_anual > 0 else 0
         
-        # Correção do Beta (Usando Covariância Direta do Pandas)
         cov_p_idx = df_calc['Portfolio'].cov(df_calc['BRAX11'])
         var_idx = df_calc['BRAX11'].var()
         beta = cov_p_idx / var_idx if var_idx != 0 else 0
         
         alpha = (df_calc['Portfolio'].mean() - beta * df_calc['BRAX11'].mean()) * 252
-        
-        # Risco Adicional
         max_dd = (acum_port / acum_port.cummax() - 1).min()
-        var_95 = np.percentile(df_calc['Portfolio'], 5) # VaR Diário 95%
+        var_95 = np.percentile(df_calc['Portfolio'], 5)
         
         # --- UI PRINCIPAL ---
         st.title("🏦 Quantum Intelligence Terminal")
@@ -187,29 +192,15 @@ if ret is not None:
 
         with tab4:
             st.header("📝 Executive Intelligence Report")
-            
-            # Inteligência de Diagnóstico
             perfil = "Agressivo (High Beta)" if beta > 1.15 else "Defensivo (Low Beta)" if beta < 0.85 else "Neutro"
             alerta = "⚠️ Risco de Concentração" if any(p > 40 for p in pesos_user.values()) else "✅ Bem Diversificada"
-            
             st.markdown(f"""
             ### Análise de Gestão de Ativos
-            
             - **Resumo do Perfil:** Sua carteira possui um perfil **{perfil}**. O Beta de **{beta:.2f}** indica que {'você amplifica' if beta > 1 else 'você amortece'} os movimentos do mercado.
             - **Qualidade do Retorno:** O Alpha anualizado de **{alpha:.2%}** mostra que suas escolhas {'geraram valor real' if alpha > 0 else 'ficaram abaixo do esperado'} frente ao risco tomado.
             - **Eficiência Operacional:** Com um Sharpe de **{sharpe:.2f}**, para cada unidade de risco, você está obtendo um prêmio satisfatório.
-            - **Suporte de Queda:** O Max Drawdown de **{max_dd:.2%}.** Se esta queda for superior à sua tolerância, recomendamos aumentar o caixa ou ativos descorrelacionados.
-            
-            **Status da Carteira:** {alerta}
+            - **Suporte de Queda:** O Max Drawdown de **{max_dd:.2%}.** **Status da Carteira:** {alerta}
             """)
-            
-            st.divider()
-            st.markdown("#### 💡 Sugestão da IA Quantum")
-            if beta > 1.3:
-                st.info("Sua carteira está muito exposta à variação do IBrX-11. Em momentos de queda do índice, você cairá muito mais. Considere ativos de proteção.")
-            elif alpha < 0:
-                st.warning("Seu Alpha está negativo. Isso significa que comprar o índice puro (ETF) teria sido mais lucrativo e menos trabalhoso neste período.")
-
     else:
         st.warning("⚠️ Selecione um período maior ou ajuste os filtros para ver as estatísticas.")
 else:
