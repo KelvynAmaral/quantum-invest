@@ -89,7 +89,7 @@ sel, cot, ret = load_data()
 if ret is not None:
     with st.sidebar:
         st.image("https://cdn-icons-png.flaticon.com/512/3135/3135706.png", width=70)
-        st.title("Quantum v3.0")
+        st.title("Quantum v3")
         cap_inicial = st.number_input("Capital Inicial (R$)", value=1000, step=1000)
 
         rf_annual = st.number_input(
