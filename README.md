@@ -50,82 +50,44 @@ quantum-invest/
 ## Modelagem Financeira
 
 ### 1. Retorno da Carteira
-
-[
+$$
 R_{p,t} = \sum_{i=1}^{N} w_i \cdot R_{i,t}
-]
-
+$$
 Onde:
-
-* ( w_i ): peso do ativo ( i )
-* ( R_{i,t} ): retorno do ativo ( i ) no tempo ( t )
-
----
-
-### 2. Retorno Acumulado
-
-[
+$w_i$: peso do ativo $i$
+$R_{i,t}$: retorno do ativo $i$ no tempo $t$
+2. Retorno Acumulado
+$$
 R_{acumulado} = \prod_{t=1}^{T} (1 + R_{p,t}) - 1
-]
-
----
-
-### 3. Volatilidade
-
-[
+$$
+3. Volatilidade
+$$
 \sigma_p = \sqrt{Var(R_p)}
-]
-
----
-
-### 4. Sharpe Ratio
-
-[
+$$
+4. Sharpe Ratio
+$$
 Sharpe = \frac{E[R_p - R_f]}{\sigma_p}
-]
-
-(assumindo ( R_f \approx 0 ) no contexto atual)
-
----
-
-### 5. Beta (CAPM)
-
+$$
+5. Beta (CAPM)
 Estimado via regressão linear:
-
-[
+$$
 R_p = \alpha + \beta R_m + \epsilon
-]
-
+$$
 Onde:
-
-* ( R_m ): retorno do benchmark (BRAX11)
-* ( \beta ): sensibilidade ao mercado
-
----
-
-### 6. Alpha
-
-[
-\alpha = R_p - \beta R_m
-]
-
----
-
-### 7. Max Drawdown
-
-[
+$R_m$: retorno do benchmark (BRAX11)
+$\beta$: sensibilidade ao mercado
+6. Alpha
+$$
+\alpha = (R_p - R_f) - \beta (R_m - R_f)
+$$
+7. Max Drawdown
+$$
 MDD = \max \left( \frac{Peak - Trough}{Peak} \right)
-]
-
----
-
-### 8. Value at Risk (VaR)
-
-Estimado empiricamente a partir da distribuição dos retornos:
-
-[
-VaR_{\alpha} = \text{quantil inferior} (R_p)
-]
+$$
+8. Value at Risk (VaR)
+$$
+VaR_{\alpha} = \text{quantil inferior}(R_p)
+$$
 
 ---
 
