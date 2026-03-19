@@ -91,6 +91,14 @@ if ret is not None:
         st.image("https://cdn-icons-png.flaticon.com/512/3135/3135706.png", width=70)
         st.title("Quantum v3.0")
         cap_inicial = st.number_input("Capital Inicial (R$)", value=1000, step=1000)
+
+        rf_annual = st.number_input(
+            "Taxa Livre de Risco (% a.a.)",
+            min_value=0.0,
+            max_value=50.0,
+            value=10.0,
+            step=0.5
+        ) / 100
         
         st.divider()
         st.subheader("🛠️ Seletor de Ativos")
@@ -100,13 +108,15 @@ if ret is not None:
         pesos_user = {}
         if ativos_user:
             if st.button("⚖️ Peso Igualitário"):
-                for a in ativos_user: st.session_state[f"w_{a}"] = round(100/len(ativos_user), 2)
+                for a in ativos_user:
+                    st.session_state[f"w_{a}"] = round(100/len(ativos_user), 2)
             
             for a in ativos_user:
                 pesos_user[a] = st.number_input(f"{a} (%)", 0.0, 100.0, key=f"w_{a}")
             
             total_w = sum(pesos_user.values())
-            if total_w != 100: st.warning(f"Soma: {total_w:.1f}%")
+            if total_w != 100:
+                st.warning(f"Soma: {total_w:.1f}%")
 
         st.divider()
         start_date = st.date_input("Início", ret['Data'].min())
@@ -115,24 +125,30 @@ if ret is not None:
     # --- PROCESSAMENTO QUANT ---
     mask = (ret['Data'].dt.date >= start_date) & (ret['Data'].dt.date <= end_date)
     df_f = ret.loc[mask].copy()
-    
+
+    rf_daily = (1 + rf_annual)**(1/252) - 1
+
     w_series = pd.Series(pesos_user) / 100
     df_f['Portfolio'] = df_f[ativos_user].mul(w_series).sum(axis=1)
-    
+
     df_calc = df_f.dropna(subset=['Portfolio', 'BRAX11'])
-    
+
     if len(df_calc) > 5:
         acum_port = (1 + df_calc['Portfolio']).cumprod()
         acum_idx = (1 + df_calc['BRAX11']).cumprod()
         
         vol_anual = df_calc['Portfolio'].std() * np.sqrt(252)
-        sharpe = (df_calc['Portfolio'].mean() * 252) / vol_anual if vol_anual > 0 else 0
+
+        # 🔥 Ajuste Sharpe (com risk-free)
+        sharpe = ((df_calc['Portfolio'] - rf_daily).mean() * 252) / vol_anual if vol_anual > 0 else 0
         
         cov_p_idx = df_calc['Portfolio'].cov(df_calc['BRAX11'])
         var_idx = df_calc['BRAX11'].var()
         beta = cov_p_idx / var_idx if var_idx != 0 else 0
         
-        alpha = (df_calc['Portfolio'].mean() - beta * df_calc['BRAX11'].mean()) * 252
+        # 🔥 Ajuste Alpha (CAPM com risk-free)
+        alpha = (((df_calc['Portfolio'] - rf_daily).mean()) - beta * ((df_calc['BRAX11'] - rf_daily).mean())) * 252
+
         max_dd = (acum_port / acum_port.cummax() - 1).min()
         var_95 = np.percentile(df_calc['Portfolio'], 5)
         
