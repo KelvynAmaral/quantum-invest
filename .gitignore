@@ -12,3 +12,9 @@ __pycache__/
 # Outros
 .DS_Store
 .ipynb_checkpoints/
+
+.venv/
+__pycache__/
+modules/__pycache__/
+.streamlit/
+*.pyc
